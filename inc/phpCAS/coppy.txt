@@ -1,0 +1,3 @@
+coppy the phpCAS library here. This folder should contain "CAS.php" and a folder called "CAS".
+More information:
+https://wiki.jasig.org/display/CASC/phpCAS
