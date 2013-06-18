@@ -546,7 +546,7 @@ function trustExternal ($user,$pass,$sticky=false)
 
       $row    = explode(":",$line,5);
       $groups = explode(",",$row[3]);
-      msg(print_r($row,true). __LINE__);
+      // msg(print_r($row,true). __LINE__);
 
       $this->users[$row[0]]['name'] = $row[1];
       $this->users[$row[0]]['mail'] = $row[2];
