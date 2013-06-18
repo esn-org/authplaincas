@@ -347,15 +347,10 @@ function trustExternal ($user,$pass,$sticky=false)
 
 
   function _setCustomGroups ($userId)
-  {
-    if (! $this->_getOption('customgroups')) {
-      return;
-    }
-    
+  {    
     $customGroups = plaincas_custom_groups();
     
     if (! is_array($customGroups) || empty($customGroups)) {
-      $this->_log('No custom groups specified.');
       return;
     }
     
