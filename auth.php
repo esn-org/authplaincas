@@ -347,7 +347,11 @@ function trustExternal ($user,$pass,$sticky=false)
 
 
   function _setCustomGroups ($userId)
-  {    
+  {
+    // assert existence of function for backwards compatibility
+    if (!function_exists('plaincas_custom_groups')) {
+      return;
+    }
     $customGroups = plaincas_custom_groups();
     
     if (! is_array($customGroups) || empty($customGroups)) {
