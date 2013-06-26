@@ -256,7 +256,7 @@ function trustExternal ($user,$pass,$sticky=false)
         $this->_saveUserGroup();
         $this->_saveUserInfo();
 
-        msg(print_r($this->_userInfo,true) . __LINE__);
+        // msg(print_r($this->_userInfo,true) . __LINE__);
         
         $USERINFO = $this->_userInfo;
         $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
