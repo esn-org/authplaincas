@@ -240,10 +240,10 @@ function trustExternal ($user,$pass,$sticky=false)
     if ((phpCAS::isAuthenticated() || $this->_getOption('autologin') ) && phpCAS::checkAuthentication()) {
 
       $remoteUser = phpCAS::getUser();
-      // Create the user if he doesn't exist
       $this->_userInfo = $this->getUserData($remoteUser);
       // msg(print_r($this->_userInfo,true) . __LINE__);
       
+      // Create the user if he doesn't exist
       if ($this->_userInfo === false) {
         $attributes = plaincas_user_attributes(phpCAS::getAttributes());
         $this->_userInfo = array(              
@@ -263,15 +263,20 @@ function trustExternal ($user,$pass,$sticky=false)
         $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
         $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
         return true;
-      
-      }else {
+
+      // User exists, check for updates
+      } else {
         $this->_userInfo['uid'] = $remoteUser;
         $this->_assembleGroups($remoteUser);
-        if( $this->_userInfo['grps'] != $this->_userInfo['tmp_grps'])
-        {
-          //msg("new roles");
+
+        $attributes = plaincas_user_attributes(phpCAS::getAttributes());
+
+        if ($this->_userInfo['grps'] != $this->_userInfo['tmp_grps'] ||
+            $attributes['name'] !== $this->_userInfo['name'] ||
+            $attributes['mail'] !== $this->_userInfo['mail']
+            ) {
+          //msg("new roles, email, or name");
           $this->deleteUsers(array($remoteUser));
-          $attributes = plaincas_user_attributes(phpCAS::getAttributes());
           $this->_userInfo = array(              
             'uid' => $remoteUser, 
             'name' => $attributes['name'], 
@@ -280,8 +285,8 @@ function trustExternal ($user,$pass,$sticky=false)
           $this->_assembleGroups($remoteUser);
           $this->_saveUserGroup();
           $this->_saveUserInfo();
+        }
 
-        }              
         $USERINFO = $this->_userInfo;
         $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
         $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
