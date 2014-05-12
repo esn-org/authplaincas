@@ -106,6 +106,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->_options['server'] = $this->getConf('server');
       $this->_options['rootcas'] = $this->getConf('rootcas');
       $this->_options['port'] = $this->getConf('port');
+      $this->_options['samlValidate'] = $this->getConf('samlValidate');
       $this->_options['autologin'] = $this->getConf('autologinout'); // $this->getConf('autologin');
       $this->_options['caslogout'] = $this->getConf('autologinout'); // $this->getConf('caslogout');
       $this->_options['handlelogoutrequest'] = $this->getConf('handlelogoutrequest');
@@ -127,7 +128,11 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       if($this->_getOption("logFile")){ phpCAS::setDebug($this->_getOption("logFile"));} 
       //If $conf['auth']['cas']['logFile'] exist we start phpCAS in debug mode
 
-      phpCAS::client(CAS_VERSION_2_0, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), true); 
+      $server_version  = CAS_VERSION_2_0;
+      if($this->_getOption("samlValidate")) {
+          $server_version = SAML_VERSION_1_1;
+      }
+      phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), true);
       //Note the last argument true, to allow phpCAS to change the session_id so he will be able to destroy the session after a CAS logout request - Enable Single Sign Out
 
       // curl extension is needed

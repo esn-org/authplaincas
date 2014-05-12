@@ -7,6 +7,7 @@ $conf['logourl'] = '';
 $conf['server'] = '';
 $conf['rootcas'] = '';
 $conf['port'] = '';
+$conf['samlValidate'] = 0;
 
 $conf['handlelogoutrequest'] = 0;
 $conf['handlelogoutrequestTrustedHosts'] = '';
