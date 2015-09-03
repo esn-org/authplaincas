@@ -1,6 +1,6 @@
 <?php
 /*
- * The function purecas_group_patterns has to return an array
+ * The function plaincas_group_patterns has to return an array
  * with the groups as keys and the corresponding regular expressions as values.
  * Other groups can be assigned with the custom groups. 
  */
@@ -14,7 +14,7 @@ function plaincas_group_patterns() {
 }
 
 /*
- * The function purecas_pattern_attributes has to return an array
+ * The function plaincas_pattern_attributes has to return an array
  * with the CAS attributes which will be matched against the regular expressions
  * $attributes = phpCAS::getAttributes();
  */
@@ -28,7 +28,7 @@ function plaincas_pattern_attributes( $attributes ){
 }
 
 /*
- * The function purecas_user_attributes has to return an array
+ * The function plaincas_user_attributes has to return an array
  * with keys 'name' and 'mail' representing the user.
  * $attributes = phpCAS::getAttributes();
  */
@@ -52,7 +52,7 @@ function plaincas_custom_groups(){
     'group2' => array('username3', 'userame4'),
   );
 
-  return array();
+  return $customGroups;
 }
 
 
