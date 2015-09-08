@@ -242,7 +242,7 @@ function trustExternal ($user,$pass,$sticky=false)
     global $USERINFO;
     $sticky ? $sticky = true : $sticky = false; //sanity check
     
-    if ((phpCAS::isAuthenticated() || $this->_getOption('autologin') ) && phpCAS::checkAuthentication()) {
+    if (phpCAS::isAuthenticated() || ( $this->_getOption('autologin') && phpCAS::checkAuthentication() )) {
 
       $remoteUser = phpCAS::getUser();
       $this->_userInfo = $this->getUserData($remoteUser);
