@@ -107,8 +107,8 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->_options['rootcas'] = $this->getConf('rootcas');
       $this->_options['port'] = $this->getConf('port');
       $this->_options['samlValidate'] = $this->getConf('samlValidate');
-      $this->_options['autologin'] = $this->getConf('autologinout'); // $this->getConf('autologin');
-      $this->_options['caslogout'] = $this->getConf('autologinout'); // $this->getConf('caslogout');
+      $this->_options['autologin'] = $this->getConf('autologinout')?$this->getConf('autologinout'):$this->getConf('autologin');
+      $this->_options['caslogout'] = $this->getConf('casloginout')?$this->getConf('autologinout'):$this->getConf('caslogout');
       $this->_options['handlelogoutrequest'] = $this->getConf('handlelogoutrequest');
       $this->_options['handlelogoutrequestTrustedHosts'] = $this->getConf('handlelogoutrequestTrustedHosts');
       $this->_options['minimalgroups'] = $this->getConf('minimalgroups');
