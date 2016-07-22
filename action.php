@@ -24,7 +24,7 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
     );
   }
 
-  function register (&$controller) {
+  function register (Doku_Event_Handler $controller) {
       $controller->register_hook ('HTML_LOGINFORM_OUTPUT', 'BEFORE', $this, 'handle_login_form');
       $controller->register_hook ('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action');
       $controller->register_hook ('TPL_ACT_UNKNOWN', 'BEFORE', $this, 'handle_template');
