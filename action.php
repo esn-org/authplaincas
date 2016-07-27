@@ -63,7 +63,7 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
       $event->data->_content = array(); // remove the login form
       
       $event->data->insertElement(0,'<fieldset><legend>'.$this->getConf('name').'</legend>');
-      $event->data->insertElement(1,'<p style="text-align: center;">'.$caslogo.'<a href="'.$this->_selfdo('caslogin').'">Login</a></p>');
+      $event->data->insertElement(1,'<p style="text-align: center;">'.$caslogo.'<a href="'.$this->_selfdo('caslogin').'">'.$lang['btn_login'].'</a></p>');
       $event->data->insertElement(2,'</fieldset>');
       
       //instead of removing, one could implement a local login here...
