@@ -550,7 +550,7 @@ function trustExternal ($user,$pass,$sticky=false)
    *
    * @author  Andreas Gohr <andi@splitbrain.org>
    */
-  function getUserData($user){
+  function getUserData($user, $requireGroups=true) {
     if($this->users === null) $this->_loadUserData();
     return isset($this->users[$user]) ? $this->users[$user] : false;
   }
