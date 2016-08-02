@@ -73,8 +73,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->cando['getUsers']     = true;
       $this->cando['getUserCount'] = true;
 
-      $this->cando['external'] = (preg_match("#(bot)|(slurp)|(netvibes)#i", $_SERVER['HTTP_USER_AGENT'])) ? false : true;
-      //Disable CAS redirection for bots/crawlers/readers
+      $this->cando['external'] = true;
       $this->cando['login'] = true;
       $this->cando['logout'] = true;
       $this->cando['logoff'] = true;
@@ -107,18 +106,30 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->_options['rootcas'] = $this->getConf('rootcas');
       $this->_options['port'] = $this->getConf('port');
       $this->_options['samlValidate'] = $this->getConf('samlValidate');
-      $this->_options['autologin'] = $this->getConf('autologinout')?$this->getConf('autologinout'):$this->getConf('autologin');
-      $this->_options['caslogout'] = $this->getConf('casloginout')?$this->getConf('autologinout'):$this->getConf('caslogout');
       $this->_options['handlelogoutrequest'] = $this->getConf('handlelogoutrequest');
       $this->_options['handlelogoutrequestTrustedHosts'] = $this->getConf('handlelogoutrequestTrustedHosts');
       $this->_options['minimalgroups'] = $this->getConf('minimalgroups');
       $this->_options['localusers'] = $this->getConf('localusers');
       // $this->_options['defaultgroup'] = $this->getConf('defaultgroup');
       // $this->_options['superuser'] = $this->getConf('superuser');
-      
+
+      // Configure support for autologin (gateway mode) and redirecting on logout for CAS server single-logout
+      if (preg_match("#(bot)|(slurp)|(netvibes)#i", $_SERVER['HTTP_USER_AGENT'])) {
+        // bots (like search engine indexers) should never be given 302 redirects
+        $this->_options['autologin'] = false;
+        $this->_options['caslogout'] = false;
+      } elseif ($this->getConf('autologinout') == true) {
+        // the "autologinout" configuration parameter enables both gateway mode and external CAS server logout
+        $this->_options['autologin'] = true;
+        $this->_options['caslogout'] = true;
+      } else {
+        // otherwise, fall back to the individual configuration parameters "autologin" and "caslogout"
+        $this->_options['autologin'] = $this->getConf('autologin');
+        $this->_options['caslogout'] = $this->getConf('caslogout');
+      }
+
       // no local users at the moment
       $this->_options['localusers'] = false;
-      
       
       if($this->_options['localusers'] && !@is_readable($this->localuserfile)) {
         msg("plainCAS: The local users file is not readable.", -1);
@@ -143,12 +154,17 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
         $this->success = false;
         return;
       }
-      // automatically log the user when there is a cas session opened
-      if($this->_getOption('autologin')) {
-        phpCAS::setCacheTimesForAuthRecheck(1);
-      }
-      else {
+
+      // when using autologin (gateway mode), how often will autologin be attempted
+      if ($this->getConf('autologinonce', false)) {
+        // cache a failed autologin attempt "forever" until the current
+        // anonymous session expires or the user clicks the login button
         phpCAS::setCacheTimesForAuthRecheck(-1);
+      } else {
+        // retry autologin every pageview, but cache a failed gateway attempt 1
+        // time, to avoid a second gateway attempt on the indexer.php page
+        // asset on the same pageview
+        phpCAS::setCacheTimesForAuthRecheck(1);
       }
 
       if($this->_getOption('cert')) {
