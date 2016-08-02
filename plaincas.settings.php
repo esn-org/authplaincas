@@ -5,12 +5,12 @@
  * Other groups can be assigned with the custom groups. 
  */
 function plaincas_group_patterns() {
-  $casGroups = array(
+  $groups = array(
     'group1' => '/^(some-attribute)$/',
     
   );
   
-  return $casGroups;
+  return $groups;
 }
 
 /*
@@ -34,7 +34,7 @@ function plaincas_pattern_attributes( $attributes ){
  */
 function plaincas_user_attributes( $attributes ){
   return array(
-    'name' => $attributes['first'] . ' ' . $attributes['last'], 
+    'name' => $attributes['first'] . ' ' . $attributes['last'],
     'mail' => $attributes['mail'],
   );
 }
@@ -47,12 +47,12 @@ function plaincas_user_attributes( $attributes ){
  */
 function plaincas_custom_groups(){
   
-  $customGroups = array(
+  $groups = array(
     'group1' => array('username1', 'userame2'),
     'group2' => array('username3', 'userame4'),
   );
 
-  return $customGroups;
+  return $groups;
 }
 
 
