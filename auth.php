@@ -10,7 +10,22 @@
 // must be run within Dokuwiki
 if(!defined('DOKU_INC')) die();
 
-require_once(DOKU_PLUGIN.'authplaincas/phpCAS/CAS.php');
+// Look for the phpCAS library in different places.
+if (!class_exists('phpCAS')) {
+  $phpcas_paths = [
+    DOKU_INC . 'vendor/jasig/phpcas/CAS.php',
+    DOKU_INC . 'phpCAS/CAS.php',
+    DOKU_PLUGIN . 'phpCAS/CAS.php',
+    DOKU_PLUGIN . 'authplaincas/phpCAS/CAS.php',
+  ];
+  foreach ($phpcas_paths as $file) {
+    if (file_exists($file)) {
+      require_once $file;
+      continue;
+    }
+  }
+}
+
 
 class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
   /** @var array user cache */
@@ -37,7 +52,20 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
     parent::__construct();
     global $config_cascade;
     global $conf;
-    
+
+    // Show an error message instead of a php error when third party conditions
+    // are not met.
+    if (!class_exists('phpCAS')) {
+      msg("CAS err: phpCAS class not found.",-1);
+      $this->success = false;
+      return;
+    }
+    if(!function_exists('curl_init')) {
+      msg("CAS err: CURL php extension not found.",-1);
+      $this->success = false;
+      return;
+    }
+
     // allow the preloading to configure other user files
     if( isset($config_cascade['plaincasauth.users']) && isset($config_cascade['plaincasauth.users']['default']) ) {
       $this->casuserfile = $config_cascade['plaincasauth.users']['default'];
@@ -145,15 +173,6 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       }
       phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), true);
       //Note the last argument true, to allow phpCAS to change the session_id so he will be able to destroy the session after a CAS logout request - Enable Single Sign Out
-
-      // curl extension is needed
-      if(!function_exists('curl_init')) {
-        if ($this->_getOption('debug')) {
-          msg("CAS err: CURL extension not found.",-1,__LINE__,__FILE__);
-        }
-        $this->success = false;
-        return;
-      }
 
       // when using autologin (gateway mode), how often will autologin be attempted
       if ($this->getConf('autologinonce', false)) {
