@@ -20,3 +20,5 @@ $lang['autologinout'] = 'login automatically and logout from CAS';
 
 $lang['localusers'] = 'Allow local users (authplain list) -> switch athentication to "authplain" to manage the userlist';
 $lang['minimalgroups'] = 'Comma separated list of groups of which a CAS user needs at least one to be created in the system. (group1, group2) leave empty to allow all users.';
+
+$lang['force_redirect'] = 'Redirect user to CAS if permission is required or ACT=login (no login message)';

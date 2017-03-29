@@ -19,3 +19,5 @@ $meta['autologinout'] = array('onoff');
 
 // $meta['localusers'] = array('onoff');
 $meta['minimalgroups'] = array('string');
+
+$meta['force_redirect'] = array('onoff');
