@@ -104,9 +104,10 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
   }
 
   function handle_action_after (&$event, $param){
-    global $ACT, $auth, $USERINFO;
+    global $ACT, $auth, $USERINFO, $MSG;
 
     if(
+        empty($MSG) &&
         (($ACT == 'denied' && empty($USERINFO)) || $ACT == 'login') &&
         $this->getConf('force_redirect') &&
         !($auth && $auth->canDo('modPass') && actionOK('resendpwd'))
