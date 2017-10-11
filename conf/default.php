@@ -12,10 +12,7 @@ $conf['samlValidate'] = 0;
 $conf['handlelogoutrequest'] = 0;
 $conf['handlelogoutrequestTrustedHosts'] = '';
 
-// $conf['autologin'] = 1;
-// $conf['caslogout'] = 1;
-// an additional switch for logging out would need to be set otherwise the user will be loged in again after the logout.
-$conf['autologinout'] = 0;
+$conf['autologin'] = 0;
 
 $conf['localusers'] = 0;
 $conf['minimalgroups'] = '';

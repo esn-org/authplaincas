@@ -12,10 +12,7 @@ $meta['port'] = array('string');
 $meta['handlelogoutrequest'] = array('onoff');
 $meta['handlelogoutrequestTrustedHosts'] = array('string');
 
-// $meta['caslogout'] = array('onoff');
-// $meta['autologin'] = array('onoff');
-// an additional switch for logging out would need to be set otherwise the user will be loged in again after the logout.
-$meta['autologinout'] = array('onoff');
+$meta['autologin'] = array('onoff');
 
 // $meta['localusers'] = array('onoff');
 $meta['minimalgroups'] = array('string');

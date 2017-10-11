@@ -1,7 +1,7 @@
 <?php
 /**
  * Plain CAS authentication plugin
- * 
+ *
  * @licence   GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author    Fabian Bircher
  * @version   0.0.2
@@ -33,7 +33,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
 
   /** @var array filter pattern */
   protected $_pattern = array();
-  
+
   var $_options = array();
   var $_userInfo = array();
 
@@ -105,7 +105,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->cando['login'] = true;
       $this->cando['logout'] = true;
       $this->cando['logoff'] = true;
-      
+
       // The default options which need to be set in the settins file.
       $defaults = array(
         // 'server' => 'galaxy.esn.org',
@@ -122,13 +122,13 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
         'cacert' => NULL,
         'debug' => false,
         'settings_file' => DOKU_CONF . 'plaincas.settings.php',
-        
+
         'defaultgroup' => $conf['defaultgroup'],
         'superuser' => $conf['superuser'],
-        
+
       );
       $this->_options = (array) $conf['plugin']['authplaincas'] + $defaults;
-      
+
       // Options are set in the configuration and have a proper default value there.
       $this->_options['server'] = $this->getConf('server');
       $this->_options['rootcas'] = $this->getConf('rootcas');
@@ -145,34 +145,28 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       if (preg_match("#(bot)|(slurp)|(netvibes)#i", $_SERVER['HTTP_USER_AGENT'])) {
         // bots (like search engine indexers) should never be given 302 redirects
         $this->_options['autologin'] = false;
-        $this->_options['caslogout'] = false;
-      } elseif ($this->getConf('autologinout') == true) {
-        // the "autologinout" configuration parameter enables both gateway mode and external CAS server logout
-        $this->_options['autologin'] = true;
-        $this->_options['caslogout'] = true;
       } else {
         // otherwise, fall back to the individual configuration parameters "autologin" and "caslogout"
         $this->_options['autologin'] = $this->getConf('autologin');
-        $this->_options['caslogout'] = $this->getConf('caslogout');
       }
 
       // no local users at the moment
       $this->_options['localusers'] = false;
-      
+
       if($this->_options['localusers'] && !@is_readable($this->localuserfile)) {
         msg("plainCAS: The local users file is not readable.", -1);
         $this->success = false;
       }
-      
-      if($this->_getOption("logFile")){ phpCAS::setDebug($this->_getOption("logFile"));} 
+
+      if($this->_getOption("logFile")){ phpCAS::setDebug($this->_getOption("logFile"));}
       //If $conf['auth']['cas']['logFile'] exist we start phpCAS in debug mode
 
       $server_version  = CAS_VERSION_2_0;
       if($this->_getOption("samlValidate")) {
           $server_version = SAML_VERSION_1_1;
       }
-      phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), true);
-      //Note the last argument true, to allow phpCAS to change the session_id so he will be able to destroy the session after a CAS logout request - Enable Single Sign Out
+      phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), false);
+      //False avoids phpCAS from taking care of sessions messing with the session ID. As Dokuwiki introduced new requirements to the session ID, logins will otherwise fail. This causes some PHP warnings on logout so should be updated once supported by phpCAS
 
       // when using autologin (gateway mode), how often will autologin be attempted
       if ($this->getConf('autologinonce', false)) {
@@ -202,18 +196,18 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       else {
         phpCAS::handleLogoutRequests(false);
       }
-      
+
       if (@is_readable($this->_getOption('settings_file'))) {
         include_once($this->_getOption('settings_file'));
       }
       else {
         include_once(DOKU_PLUGIN . 'authplaincas/plaincas.settings.php');
       }
-      
+
     }
     //
   }
-    
+
   function _getOption ($optionName)
   {
     if (isset($this->_options[$optionName])) {
@@ -236,7 +230,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
     }
     return NULL;
   }
-  
+
   /**
    * Inherited canDo function, may be useful for localusers
    *
@@ -254,50 +248,50 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
     phpCAS::setFixedServiceURL($login_url);
     phpCAS::forceAuthentication();
   }
-    
+
   public function logOff() {
     global $QUERY;
-    
-    if($this->_getOption('caslogout')) { // dokuwiki + cas logout
+
+    if($this->_getOption('handlelogoutrequest')) { // dokuwiki + cas logout
       @session_start();
       session_destroy();
       $logout_url = DOKU_URL . 'doku.php?id=' . $QUERY;
-      phpCAS::logoutWithRedirectService($logout_url);
+      //hide warnings of not initalized session, cas session is killed anyway
+      @phpCAS::logoutWithRedirectService($logout_url);
     }
     else { // dokuwiki logout only
       @session_start();
       session_destroy();
       unset($_SESSION['phpCAS']);
     }
-    
   }
-  
+
 function trustExternal ($user,$pass,$sticky=false)
   {
     global $USERINFO;
     $sticky ? $sticky = true : $sticky = false; //sanity check
-    
+
     if (phpCAS::isAuthenticated() || ( $this->_getOption('autologin') && phpCAS::checkAuthentication() )) {
 
       $remoteUser = phpCAS::getUser();
       $this->_userInfo = $this->getUserData($remoteUser);
       // msg(print_r($this->_userInfo,true) . __LINE__);
-      
+
       // Create the user if he doesn't exist
       if ($this->_userInfo === false) {
         $attributes = plaincas_user_attributes(phpCAS::getAttributes());
-        $this->_userInfo = array(              
-          'uid' => $remoteUser, 
-          'name' => $attributes['name'], 
+        $this->_userInfo = array(
+          'uid' => $remoteUser,
+          'name' => $attributes['name'],
           'mail' => $attributes['mail']
         );
-        
+
         $this->_assembleGroups($remoteUser);
         $this->_saveUserGroup();
         $this->_saveUserInfo();
 
         // msg(print_r($this->_userInfo,true) . __LINE__);
-        
+
         $USERINFO = $this->_userInfo;
         $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
         $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
@@ -317,9 +311,9 @@ function trustExternal ($user,$pass,$sticky=false)
             ) {
           //msg("new roles, email, or name");
           $this->deleteUsers(array($remoteUser));
-          $this->_userInfo = array(              
-            'uid' => $remoteUser, 
-            'name' => $attributes['name'], 
+          $this->_userInfo = array(
+            'uid' => $remoteUser,
+            'name' => $attributes['name'],
             'mail' => $attributes['mail']
           );
           $this->_assembleGroups($remoteUser);
@@ -331,10 +325,10 @@ function trustExternal ($user,$pass,$sticky=false)
         $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
         $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
         $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
-          
+
         return true;
       }
-      
+
     }
     // else{
     // }
@@ -344,20 +338,20 @@ function trustExternal ($user,$pass,$sticky=false)
 
 
   function _assembleGroups($remoteUser) {
-  
+
     $this->_userInfo['tmp_grps'] = array();
-    
+
     if (NULL !== $this->_getOption('defaultgroup')) {
       $this->_addUserGroup($this->_getOption('defaultgroup'));
     }
-    
-    if ((NULL !== $this->_getOption('superusers')) && 
-          is_array($this->_getOption('superusers')) && 
+
+    if ((NULL !== $this->_getOption('superusers')) &&
+          is_array($this->_getOption('superusers')) &&
           in_array($remoteUser, $this->_getOption('superusers'))) {
-          
+
       $this->_addUserGroup($this->_getOption('admingroup'));
     }
-    
+
     $this->_setCASGroups();
     $this->_setCustomGroups($remoteUser);
   }
@@ -375,7 +369,7 @@ function trustExternal ($user,$pass,$sticky=false)
         foreach ($patterns as $role => $pattern) {
           foreach ($attributes as $attribute) {
             // An invalid pattern will generate a php warning and will not be considered.
-            if (preg_match($pattern, $attribute)) { 
+            if (preg_match($pattern, $attribute)) {
               $this->_addUserGroup($role);
             }
           }
@@ -398,15 +392,15 @@ function trustExternal ($user,$pass,$sticky=false)
       return;
     }
     $customGroups = plaincas_custom_groups();
-    
+
     if (! is_array($customGroups) || empty($customGroups)) {
       return;
     }
-    
+
     foreach ($customGroups as $groupName => $groupMembers) {
       if (! is_array($groupMembers) || empty($groupMembers)) {
         continue;
-      }      
+      }
       if (in_array($userId, $groupMembers)) {
         $this->_addUserGroup($groupName);
       }
@@ -423,9 +417,9 @@ function trustExternal ($user,$pass,$sticky=false)
     if( !in_array(trim($groupName), $this->_userInfo['tmp_grps'])) {
       $this->_userInfo['tmp_grps'][] = trim($groupName);
     }
-      
+
   }
-  
+
   function _saveUserGroup()
   {
     $this->_userInfo['grps'] = $this->_userInfo['tmp_grps'];
@@ -442,11 +436,11 @@ function trustExternal ($user,$pass,$sticky=false)
     else {
       return false;
     }
-  
+
   }
 
   function _saveUserInfo ()
-  { 
+  {
     $save = true;
     if(!$this->_minimalGroupCheck()) {
       $save = false;
@@ -454,12 +448,12 @@ function trustExternal ($user,$pass,$sticky=false)
       $this->_userInfo['tmp_grps'] = array();
     }
     global $USERINFO;
-    
+
     $USERINFO = $this->_userInfo;
     $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
     $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-    
-    // Despite setting the user into the session, DokuWiki still uses hard-coded REMOTE_USER variable    
+
+    // Despite setting the user into the session, DokuWiki still uses hard-coded REMOTE_USER variable
     $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
 
     // user mustn't already exist
@@ -556,7 +550,7 @@ function trustExternal ($user,$pass,$sticky=false)
     return $count;
   }
 
-  
+
   /**
    * Return user info
    *
@@ -602,8 +596,8 @@ function trustExternal ($user,$pass,$sticky=false)
       $this->users[$row[0]]['grps'] = $groups;
     }
   }
-  
-  
+
+
   /**
    * Return a count of the number of user which meet $filter criteria
    *
@@ -657,7 +651,7 @@ function trustExternal ($user,$pass,$sticky=false)
 
     return $out;
   }
-  
+
   function cleanUser($user) {
     $user = str_replace('@', '_', $user);
     $user = str_replace(':', '_', $user);
