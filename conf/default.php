@@ -20,4 +20,4 @@ $conf['autologinout'] = 0;
 $conf['localusers'] = 0;
 $conf['minimalgroups'] = '';
 
-
+$conf['force_redirect'] = 0;
