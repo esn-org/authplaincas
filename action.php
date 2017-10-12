@@ -107,12 +107,21 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
     global $ACT, $auth, $USERINFO, $MSG;
 
     if(
-        empty($MSG) &&
         (($ACT == 'denied' && empty($USERINFO)) || $ACT == 'login') &&
         $this->getConf('force_redirect') &&
         !($auth && $auth->canDo('modPass') && actionOK('resendpwd'))
-      ) {
-      $this->handle_caslogin(); // will jump out if redirect is required
+      ){
+        // check $MSG
+        if(is_array($MSG)){
+            foreach ($MSG as $m) {
+              if($m && info_msg_allowed($m)){
+                return;
+                // Has messages, don't execute the redirector below
+              }
+            }
+        }
+
+        $this->handle_caslogin(); // will jump out if redirect is required
     }
   }
 
