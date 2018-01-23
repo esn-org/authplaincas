@@ -97,7 +97,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->cando['modPass']      = false;
       $this->cando['modName']      = false;
       $this->cando['modMail']      = false;
-      $this->cando['modGroups']    = false;
+      $this->cando['modGroups']    = true;
       $this->cando['getUsers']     = true;
       $this->cando['getUserCount'] = true;
 
