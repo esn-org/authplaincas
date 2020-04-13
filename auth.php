@@ -243,19 +243,16 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
   }
 
   public function logIn() {
-    global $QUERY;
-    $login_url = DOKU_URL . 'doku.php?id=' . $QUERY;
+    $login_url = DOKU_URL . 'doku.php?id=' . $_GET["id"];
     phpCAS::setFixedServiceURL($login_url);
     phpCAS::forceAuthentication();
   }
 
   public function logOff() {
-    global $QUERY;
-
     if($this->_getOption('handlelogoutrequest')) { // dokuwiki + cas logout
       @session_start();
       session_destroy();
-      $logout_url = DOKU_URL . 'doku.php?id=' . $QUERY;
+      $logout_url = DOKU_URL . 'doku.php';
       //hide warnings of not initalized session, cas session is killed anyway
       @phpCAS::logoutWithRedirectService($logout_url);
     }
