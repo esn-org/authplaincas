@@ -25,7 +25,8 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
   }
 
   function register (Doku_Event_Handler $controller) {
-      $controller->register_hook ('HTML_LOGINFORM_OUTPUT', 'BEFORE', $this, 'handle_login_form');
+      $controller->register_hook ('HTML_LOGINFORM_OUTPUT', 'BEFORE', $this, 'handle_login_form'); // old < 2022 "igor"
+      $controller->register_hook ('FORM_LOGIN_OUTPUT', 'BEFORE', $this, 'handle_login_form'); // new >= 2022 "igor"
       $controller->register_hook ('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action');
       $controller->register_hook ('ACTION_ACT_PREPROCESS', 'AFTER', $this, 'handle_action_after');
       $controller->register_hook ('TPL_ACT_UNKNOWN', 'BEFORE', $this, 'handle_template');
@@ -60,24 +61,51 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
         $caslogo = '';
       }
 
-      //var_dump($event->data->_content);
-      $event->data->_content = array(); // remove the login form
+      $form = $event->data;
 
-      $event->data->insertElement(0,'<fieldset><legend>'.$this->getConf('name').'</legend>');
-      $event->data->insertElement(1,'<p style="text-align: center;"><a href="'.$this->_selfdo('caslogin').'"><div>'.$caslogo.'</div>'.$lang['btn_login'].'</a></p>');
-      $event->data->insertElement(2,'</fieldset>');
+      if (is_a($form, \dokuwiki\Form\Form::class)) {
+        // new Form >= 2022 "igor"
 
-      //instead of removing, one could implement a local login here...
-      // if ($this->getConf('jshidelocal')) {
+        // remove default login form
+        $nelement = $form->elementCount();
+        for($pos=0; $pos<$nelement; $pos++) {
+          $form->removeElement(0);
+        }
+
+        $form->addFieldsetOpen($this->getConf('name'));
+        $href = $form->addTagOpen('a');
+        $href->attr('href', $this->_selfdo('caslogin'));
+        $form->addHTML($caslogo);
+        $form->addHTML($lang['btn_login']);
+        $form->addTagClose('a');
+        $form->addFieldsetClose();
+
+        if ($auth && $auth->canDo('modPass') && actionOK('resendpwd')) {
+          $form->addHTML('<p>'.$lang['pwdforget'].': <a href="'.wl($ID,'do=resendpwd').'" rel="nofollow" class="wikilink1">'.$lang['btn_resendpwd'].'</a></p>');
+        }
+
+      } else {
+        // old form < 2022 "igor" (kept for backward compatibility)
+
+        //var_dump($event->data->_content);
+        $event->data->_content = array(); // remove the login form
+
+        $event->data->insertElement(0,'<fieldset><legend>'.$this->getConf('name').'</legend>');
+        $event->data->insertElement(1,'<p style="text-align: center;"><a href="'.$this->_selfdo('caslogin').'"><div>'.$caslogo.'</div>'.$lang['btn_login'].'</a></p>');
+        $event->data->insertElement(2,'</fieldset>');
+
+        //instead of removing, one could implement a local login here...
+        // if ($this->getConf('jshidelocal')) {
         // $event->data->insertElement(3,'<p id="normalLoginToggle" style="display: none; text-align: center;"><a href="#" onClick="javascript:document.getElementById(\'normalLogin\').style.display = \'block\'; document.getElementById(\'normalLoginToggle\').style.display = \'none\'; return false;">Show '.$this->getConf('localname').'</a></p><p style="text-align: center;">Only use this if you cannot use the '.$this->getConf('name').' above.</p>');
         // $event->data->replaceElement(4,'<fieldset id="normalLogin" style="display: block;"><legend>'.$this->getConf('localname').'</legend><script type="text/javascript">document.getElementById(\'normalLoginToggle\').style.display = \'block\'; document.getElementById(\'normalLogin\').style.display = \'none\';</script>');
       // } else {
         // $event->data->replaceElement(3,'<fieldset><legend>'.$this->getConf('localname').'</legend>');
       // }
 
-      $insertElement = 3;
-      if ($auth && $auth->canDo('modPass') && actionOK('resendpwd')) {
-        $event->data->insertElement($insertElement,'<p>'.$lang['pwdforget'].': <a href="'.wl($ID,'do=resendpwd').'" rel="nofollow" class="wikilink1">'.$lang['btn_resendpwd'].'</a></p>');
+        $insertElement = 3;
+        if ($auth && $auth->canDo('modPass') && actionOK('resendpwd')) {
+          $event->data->insertElement($insertElement,'<p>'.$lang['pwdforget'].': <a href="'.wl($ID,'do=resendpwd').'" rel="nofollow" class="wikilink1">'.$lang['btn_resendpwd'].'</a></p>');
+        }
       }
 
     }
