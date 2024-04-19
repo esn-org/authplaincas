@@ -165,7 +165,13 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       if($this->_getOption("samlValidate")) {
           $server_version = SAML_VERSION_1_1;
       }
-      phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), false);
+      if (version_compare(PHPCAS_VERSION, '1.6', '>=')) {
+          $parsed_url = parse_url(wl('','',true));
+          $cas_client_base_url = $parsed_url['scheme'] . '://' . $parsed_url['host'];
+          phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), $cas_client_base_url, false);
+      } else {
+          phpCAS::client($server_version, $this->_getOption('server'), (int) $this->_getOption('port'), $this->_getOption('rootcas'), false);
+      }
       //False avoids phpCAS from taking care of sessions messing with the session ID. As Dokuwiki introduced new requirements to the session ID, logins will otherwise fail. This causes some PHP warnings on logout so should be updated once supported by phpCAS
 
       // when using autologin (gateway mode), how often will autologin be attempted
