@@ -40,6 +40,9 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
   var $casuserfile = null;
   var $localuserfile = NULL;
 
+  protected $rememberMeCookieName = 'DOKU_PLAINCAS_AUTH';
+  protected $rememberMeFileName = '/_plaincas_tokens.php';
+
   /**
    * Constructor
    *
@@ -106,7 +109,7 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       $this->cando['logout'] = true;
       $this->cando['logoff'] = true;
 
-      // The default options which need to be set in the settins file.
+      // The default options which need to be set in the settings file.
       $defaults = array(
         // 'server' => 'galaxy.esn.org',
         // 'rootcas' => '/cas',
@@ -269,6 +272,24 @@ class auth_plugin_authplaincas extends DokuWiki_Auth_Plugin {
       session_destroy();
       unset($_SESSION['phpCAS']);
     }
+
+    // Clear RememberMe data
+    setcookie($this->rememberMeCookieName, '', time() - 3600, DOKU_BASE);
+    $this->clearPersistentToken($_SERVER['REMOTE_USER']);
+  }
+
+  protected function clearPersistentToken($user) {
+    global $conf;
+    $tokenFile = $conf['metadir'].$this->rememberMeFileName;
+
+    if (file_exists($tokenFile)) {
+      $tokens = include($tokenFile);
+      if (isset($tokens[$user])) {
+        unset($tokens[$user]);
+        $content = "<?php return " . var_export($tokens, true) . ";";
+        io_saveFile($tokenFile, $content);
+      }
+    }
   }
 
 function trustExternal ($user,$pass,$sticky=false)
@@ -276,69 +297,152 @@ function trustExternal ($user,$pass,$sticky=false)
     global $USERINFO;
     $sticky ? $sticky = true : $sticky = false; //sanity check
 
-    if (phpCAS::isAuthenticated() || ( $this->_getOption('autologin') && phpCAS::checkAuthentication() )) {
+    $remoteUser = $this->checkRememberedLogin();
+    if ($remoteUser == null) { // RememberMe cookie not available
+      if (phpCAS::isAuthenticated() || ( $this->_getOption('autologin') && phpCAS::checkAuthentication() )) {
+        $remoteUser = phpCAS::getUser(); // User logged in
+      } else {
+        return false; // Not logged in
+      }
+      $this->setAuthCookie($remoteUser);
 
-      $remoteUser = phpCAS::getUser();
-      $this->_userInfo = $this->getUserData($remoteUser);
+    }
+
+    $this->_userInfo = $this->getUserData($remoteUser);
+    // msg(print_r($this->_userInfo,true) . __LINE__);
+
+    // Create the user if he doesn't exist
+    if ($this->_userInfo === false) {
+      $attributes = plaincas_user_attributes(phpCAS::getAttributes());
+      $this->_userInfo = array(
+        'uid' => $remoteUser,
+        'name' => $attributes['name'],
+        'mail' => $attributes['mail']
+      );
+
+      $this->_assembleGroups($remoteUser);
+      $this->_saveUserGroup();
+      $this->_saveUserInfo();
+
       // msg(print_r($this->_userInfo,true) . __LINE__);
 
-      // Create the user if he doesn't exist
-      if ($this->_userInfo === false) {
-        $attributes = plaincas_user_attributes(phpCAS::getAttributes());
+      $USERINFO = $this->_userInfo;
+      $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
+      $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+      $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
+    } else { // User exists, check for updates
+      $this->_userInfo['uid'] = $remoteUser;
+      $this->_assembleGroups($remoteUser);
+
+      $attributes = plaincas_user_attributes(phpCAS::getAttributes());
+
+      if ($this->_userInfo['grps'] != $this->_userInfo['tmp_grps'] ||
+        $attributes['name'] !== $this->_userInfo['name'] ||
+        $attributes['mail'] !== $this->_userInfo['mail']
+      ) {
+        //msg("new roles, email, or name");
+        $this->deleteUsers(array($remoteUser));
         $this->_userInfo = array(
           'uid' => $remoteUser,
           'name' => $attributes['name'],
           'mail' => $attributes['mail']
         );
-
         $this->_assembleGroups($remoteUser);
         $this->_saveUserGroup();
         $this->_saveUserInfo();
-
-        // msg(print_r($this->_userInfo,true) . __LINE__);
-
-        $USERINFO = $this->_userInfo;
-        $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
-        $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-        $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
-        return true;
-
-      // User exists, check for updates
-      } else {
-        $this->_userInfo['uid'] = $remoteUser;
-        $this->_assembleGroups($remoteUser);
-
-        $attributes = plaincas_user_attributes(phpCAS::getAttributes());
-
-        if ($this->_userInfo['grps'] != $this->_userInfo['tmp_grps'] ||
-            $attributes['name'] !== $this->_userInfo['name'] ||
-            $attributes['mail'] !== $this->_userInfo['mail']
-            ) {
-          //msg("new roles, email, or name");
-          $this->deleteUsers(array($remoteUser));
-          $this->_userInfo = array(
-            'uid' => $remoteUser,
-            'name' => $attributes['name'],
-            'mail' => $attributes['mail']
-          );
-          $this->_assembleGroups($remoteUser);
-          $this->_saveUserGroup();
-          $this->_saveUserInfo();
-        }
-
-        $USERINFO = $this->_userInfo;
-        $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
-        $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-        $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
-
-        return true;
       }
 
+      $USERINFO = $this->_userInfo;
+      $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['uid'];
+      $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+      $_SERVER['REMOTE_USER'] = $USERINFO['uid'];
     }
-    // else{
-    // }
+
+    return true;
+  }
+
+  protected function checkRememberedLogin() {
+    if (isset($_COOKIE[$this->rememberMeCookieName])) {
+      try {
+        $data = json_decode(base64_decode($_COOKIE[$this->rememberMeCookieName]), true);
+        if ($data &&
+          isset($data['user']) &&
+          isset($data['token']) &&
+          isset($data['expires']) &&
+          $data['expires'] > time()) {
+          if ($this->verifyPersistentToken($data['user'], $data['token'])) {
+            return $data['user'];
+          }
+        }
+      } catch (Exception $e) {
+        msg($e->getMessage(), -1);
+      }
+
+      // Clear invalid cookie
+      setcookie($this->rememberMeCookieName, '', time() - 3600, DOKU_BASE);
+    }
+    return null;
+  }
+
+  protected function verifyPersistentToken($user, $token) {
+    global $conf;
+    $tokenFile = $conf['metadir'].$this->rememberMeFileName;
+
+    if (file_exists($tokenFile)) {
+      $tokens = include($tokenFile);
+      if (isset($tokens[$user]) &&
+        $tokens[$user]['token'] === $token &&
+        $tokens[$user]['expires'] > time()) {
+        return true;
+      }
+    }
 
     return false;
+  }
+
+  protected function setAuthCookie($user) {
+    $cookie_lifetime = time() + 30 * 24 * 60 * 60; // 30 days
+
+    $token = bin2hex(random_bytes(32));
+
+    $cookie_data = base64_encode(json_encode([
+      'user' => $user,
+      'token' => $token,
+      'expires' => $cookie_lifetime
+    ]));
+
+    setcookie(
+      $this->rememberMeCookieName,
+      $cookie_data,
+      [
+        'expires' => $cookie_lifetime,
+        'path' => DOKU_BASE,
+        'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly' => true,
+        'samesite' => 'Strict',
+      ]
+    );
+
+    // Store token in metadata
+    $this->storePersistentToken($user, $token, $cookie_lifetime);
+  }
+
+  protected function storePersistentToken($user, $token, $cookie_lifetime) {
+    global $conf;
+    $tokenFile = $conf['metadir'].$this->rememberMeFileName;
+
+    $tokens = array();
+    if (file_exists($tokenFile)) {
+      $tokens = include($tokenFile);
+    }
+
+    $tokens[$user] = [
+      'token' => $token,
+      'expires' => $cookie_lifetime
+    ];
+
+    $content = "<?php return " . var_export($tokens, true) . ";";
+    io_saveFile($tokenFile, $content);
   }
 
 

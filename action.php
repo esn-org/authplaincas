@@ -76,6 +76,8 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
         $href = $form->addTagOpen('a');
         $href->attr('href', $this->_selfdo('caslogin'));
         $form->addHTML($caslogo);
+        // Add remember me checkbox using addCheckbox
+        $form->addCheckbox('remember', $lang['remember_me']);
         $form->addHTML($lang['btn_login']);
         $form->addTagClose('a');
         $form->addFieldsetClose();
@@ -91,8 +93,9 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
         $event->data->_content = array(); // remove the login form
 
         $event->data->insertElement(0,'<fieldset><legend>'.$this->getConf('name').'</legend>');
-        $event->data->insertElement(1,'<p style="text-align: center;"><a href="'.$this->_selfdo('caslogin').'"><div>'.$caslogo.'</div>'.$lang['btn_login'].'</a></p>');
-        $event->data->insertElement(2,'</fieldset>');
+        $event->data>insertElement(1, form_makeCheckboxField('remember', '1', $lang['remember_me'], 'remember', 'remember__me'));
+        $event->data->insertElement(2,'<p style="text-align: center;"><a href="'.$this->_selfdo('caslogin').'"><div>'.$caslogo.'</div>'.$lang['btn_login'].'</a></p>');
+        $event->data->insertElement(3,'</fieldset>');
 
         //instead of removing, one could implement a local login here...
         // if ($this->getConf('jshidelocal')) {
@@ -102,14 +105,11 @@ class action_plugin_authplaincas extends DokuWiki_Action_Plugin {
         // $event->data->replaceElement(3,'<fieldset><legend>'.$this->getConf('localname').'</legend>');
       // }
 
-        $insertElement = 3;
         if ($auth && $auth->canDo('modPass') && actionOK('resendpwd')) {
-          $event->data->insertElement($insertElement,'<p>'.$lang['pwdforget'].': <a href="'.wl($ID,'do=resendpwd').'" rel="nofollow" class="wikilink1">'.$lang['btn_resendpwd'].'</a></p>');
+          $event->data->insertElement(4,'<p>'.$lang['pwdforget'].': <a href="'.wl($ID,'do=resendpwd').'" rel="nofollow" class="wikilink1">'.$lang['btn_resendpwd'].'</a></p>');
         }
       }
-
     }
-
   }
 
   function handle_caslogin () {
