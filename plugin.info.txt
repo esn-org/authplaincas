@@ -1,7 +1,7 @@
 base   authplaincas
 author Fabian Bircher
 email  fabian@esn.org
-date   2016-07-22
+date   2024-09-10
 name   Plain CAS Auth Plugin
 desc   Provides user authentication against a CAS server
 url    http://www.dokuwiki.org/plugin:authplaincas
