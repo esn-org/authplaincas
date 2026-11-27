@@ -10,12 +10,15 @@
 // must be run within Dokuwiki
 if(!defined('DOKU_INC')) die();
 
+require __DIR__ . '/vendor/autoload.php';
+
 // Look for the phpCAS library in different places.
 if (!class_exists('phpCAS')) {
   $phpcas_paths = [
-    DOKU_INC . 'vendor/jasig/phpcas/CAS.php',
+    DOKU_INC . 'vendor/apereo/phpcas/CAS.php',
     DOKU_INC . 'phpCAS/CAS.php',
     DOKU_PLUGIN . 'phpCAS/CAS.php',
+    DOKU_PLUGIN . 'authplaincas/vendor/apereo/phpcas/CAS.php',
     DOKU_PLUGIN . 'authplaincas/phpCAS/CAS.php',
   ];
   foreach ($phpcas_paths as $file) {
