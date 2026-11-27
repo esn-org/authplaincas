@@ -10,12 +10,15 @@
 // must be run within Dokuwiki
 if(!defined('DOKU_INC')) die();
 
+require __DIR__ . '/vendor/autoload.php';
+
 // Look for the phpCAS library in different places.
 if (!class_exists('phpCAS')) {
   $phpcas_paths = [
-    DOKU_INC . 'vendor/jasig/phpcas/CAS.php',
+    DOKU_INC . 'vendor/apereo/phpcas/CAS.php',
     DOKU_INC . 'phpCAS/CAS.php',
     DOKU_PLUGIN . 'phpCAS/CAS.php',
+    DOKU_PLUGIN . 'authplaincas/vendor/apereo/phpcas/CAS.php',
     DOKU_PLUGIN . 'authplaincas/phpCAS/CAS.php',
   ];
   foreach ($phpcas_paths as $file) {
@@ -284,12 +287,16 @@ function trustExternal ($user,$pass,$sticky=false)
 
       // Create the user if he doesn't exist
       if ($this->_userInfo === false) {
-        $attributes = plaincas_user_attributes(phpCAS::getAttributes());
-        $this->_userInfo = array(
-          'uid' => $remoteUser,
-          'name' => $attributes['name'],
-          'mail' => $attributes['mail']
-        );
+        if (function_exists("plaincas_user_attributes")) {
+          $attributes = plaincas_user_attributes(phpCAS::getAttributes());
+          $this->_userInfo = array(
+            'uid' => $remoteUser,
+            'name' => $attributes['name'],
+            'mail' => $attributes['mail']
+          );
+        } else {
+          $this->_userInfo = array( 'uid' => $remoteUser );
+        }
 
         $this->_assembleGroups($remoteUser);
         $this->_saveUserGroup();
@@ -364,13 +371,12 @@ function trustExternal ($user,$pass,$sticky=false)
 
   function _setCASGroups ()
   {
-    if( phpCAS::checkAuthentication() ) {
+    if( phpCAS::checkAuthentication() && function_exists("plaincas_pattern_attributes") ) {
       $attributes = plaincas_pattern_attributes(phpCAS::getAttributes());
       if (!is_array($attributes)) {
         $attributes = array($attributes);
       }
-      $patterns = plaincas_group_patterns();
-      if (!empty($patterns)) {
+      if (function_exists("plaincas_group_patterns") && $patterns = plaincas_group_patterns() && !empty($patterns)) {
         foreach ($patterns as $role => $pattern) {
           foreach ($attributes as $attribute) {
             // An invalid pattern will generate a php warning and will not be considered.
@@ -394,6 +400,9 @@ function trustExternal ($user,$pass,$sticky=false)
   {
     // assert existence of function for backwards compatibility
     if (!function_exists('plaincas_custom_groups')) {
+      return;
+    }
+    if (!function_exists("plaincas_custom_groups")) {
       return;
     }
     $customGroups = plaincas_custom_groups();

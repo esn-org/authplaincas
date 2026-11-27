@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'esn-org/authplaincas',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '1e9e78787ca82adb7747855bbd0a82aae18e5935',
+        'type' => 'project',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
+    ),
+    'versions' => array(
+        'apereo/phpcas' => array(
+            'pretty_version' => '1.6.2',
+            'version' => '1.6.2.0',
+            'reference' => 'b413d2981947fd4f97079f715e0571d0c8f2a2c5',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../apereo/phpcas',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'esn-org/authplaincas' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '1e9e78787ca82adb7747855bbd0a82aae18e5935',
+            'type' => 'project',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'psr/log' => array(
+            'pretty_version' => '3.0.2',
+            'version' => '3.0.2.0',
+            'reference' => 'f16e1d5863e37f8d8c2a01719f5b34baa2b714d3',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../psr/log',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);

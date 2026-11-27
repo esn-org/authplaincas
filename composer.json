@@ -1,0 +1,16 @@
+{
+    "name": "esn-org/authplaincas",
+    "description": "CAS authentication for dokuwiki without LDAP but using cas attributes",
+    "type": "project",
+    "require": {
+        "apereo/phpcas": ">=1.6.2"
+    },
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Fabian Bircher",
+            "email": "fabian@esn.org"
+        }
+    ],
+    "minimum-stability": "stable"
+}
