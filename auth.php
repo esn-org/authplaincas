@@ -287,16 +287,12 @@ function trustExternal ($user,$pass,$sticky=false)
 
       // Create the user if he doesn't exist
       if ($this->_userInfo === false) {
-        if (function_exists("plaincas_user_attributes")) {
-          $attributes = plaincas_user_attributes(phpCAS::getAttributes());
-          $this->_userInfo = array(
-            'uid' => $remoteUser,
-            'name' => $attributes['name'],
-            'mail' => $attributes['mail']
-          );
-        } else {
-          $this->_userInfo = array( 'uid' => $remoteUser );
-        }
+        $attributes = plaincas_user_attributes(phpCAS::getAttributes());
+        $this->_userInfo = array(
+          'uid' => $remoteUser,
+          'name' => $attributes['name'],
+          'mail' => $attributes['mail']
+        );
 
         $this->_assembleGroups($remoteUser);
         $this->_saveUserGroup();
@@ -371,12 +367,13 @@ function trustExternal ($user,$pass,$sticky=false)
 
   function _setCASGroups ()
   {
-    if( phpCAS::checkAuthentication() && function_exists("plaincas_pattern_attributes") ) {
+    if( phpCAS::checkAuthentication() ) {
       $attributes = plaincas_pattern_attributes(phpCAS::getAttributes());
       if (!is_array($attributes)) {
         $attributes = array($attributes);
       }
-      if (function_exists("plaincas_group_patterns") && $patterns = plaincas_group_patterns() && !empty($patterns)) {
+      $patterns = plaincas_group_patterns();
+      if (!empty($patterns)) {
         foreach ($patterns as $role => $pattern) {
           foreach ($attributes as $attribute) {
             // An invalid pattern will generate a php warning and will not be considered.
@@ -400,9 +397,6 @@ function trustExternal ($user,$pass,$sticky=false)
   {
     // assert existence of function for backwards compatibility
     if (!function_exists('plaincas_custom_groups')) {
-      return;
-    }
-    if (!function_exists("plaincas_custom_groups")) {
       return;
     }
     $customGroups = plaincas_custom_groups();
